@@ -7,6 +7,8 @@ import com.adrianpratik.sprites.Card;
 import java.io.*;
 import java.net.Socket;
 import java.net.SocketException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 public class ClientThread extends Thread {
@@ -78,18 +80,27 @@ public class ClientThread extends Thread {
 						break;
 					}
 					case 105: {
-						if (Server.playerTurnId >= 2) {
-							Server.playerTurnId = 1;
-						}
-						else {
-							Server.playerTurnId++;
-						}
-						System.out.println("Turno de " + playerNumber);
+						passTurn();
 					}
 					case 106: {
 						Card discartedCard = (Card) connectionResponse.data;
 						Server.deck.setLastCardDiscarted(discartedCard);
-						Server.notifyUsers(102);
+						Server.notifyUsers(102, null);
+						break;
+					}
+					case 107: {
+						CardListResponse cardListResponse = new CardListResponse();
+						for (int i = 0; i < 4; i++) cardListResponse.getCardList().add(Server.deck.getRandomCard());
+						out.writeObject(new Packet(107, cardListResponse));
+						out.flush();
+						break;
+					}
+					case 108: {
+						Server.notifyUsers(108, connectionResponse.data);
+						break;
+					}
+					case 112: {
+						Server.notifyUsers(112, null);
 						break;
 					}
 				}
@@ -100,15 +111,9 @@ public class ClientThread extends Thread {
 			try {
 				System.out.println("[DISCONECTED] " + playerNumber);
 				continueConnected = false;
-				if (Server.playerTurnId == playerNumber){
-				if (Server.playerTurnId >= 4) {
-					Server.playerTurnId = 1;
-				}
-				else {
-					Server.playerTurnId++;
-				}
-					Server.notifyUsers(102);
-				}
+				if (Server.playerTurnId == playerNumber) passTurn();
+				Server.notifyUsers(102, null);
+
 				Server.clientList.remove(this.getId());
 
 			} catch (Throwable throwable) {
@@ -118,6 +123,19 @@ public class ClientThread extends Thread {
 			e.printStackTrace();
 			continueConnected = false;
 		}
+	}
+
+	private void passTurn() {
+		do {
+			System.out.println(Server.playerTurnId);
+			if (Server.playerTurnId >= Server.numberOfPlayers) {
+				Server.playerTurnId = 1;
+			} else {
+				Server.playerTurnId++;
+			}
+			System.out.println("Turno de " + playerNumber);
+		}
+		while ((Server.clientList.get(Server.playerTurnId) == null));
 	}
 
 	public void setThreadId(int threadId) {
@@ -164,6 +182,27 @@ public class ClientThread extends Thread {
 			out.flush();
 
 			out.writeObject(new Packet(103, Server.playerTurnId));
+			out.flush();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
+	public void removeCard(Object data) {
+		try {
+			int[] cardData = (int[]) data;
+
+			out.writeObject(new Packet(108, cardData));
+			out.flush();
+
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
+	public void finishGame() {
+		try {
+			out.writeObject(new Packet(112, null));
 			out.flush();
 		} catch (IOException e) {
 			e.printStackTrace();

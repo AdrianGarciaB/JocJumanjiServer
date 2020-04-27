@@ -17,10 +17,11 @@ public class Server {
  * */
 	
 	int port;
-	public static HashMap<Long, ClientThread> clientList;
+	public static HashMap<Integer, ClientThread> clientList;
 	public boolean gameStarted;
 	public static Deck deck;
 	public static int playerTurnId = 1;
+	public static final int numberOfPlayers = 2;
 	public boolean discardCardChanged;
 
 
@@ -29,9 +30,11 @@ public class Server {
 		clientList = new HashMap<>();
 	}
 
-	public static void notifyUsers(int code) {
+	public static void notifyUsers(int code, Object data) {
 		switch (code){
 			case 102: clientList.forEach((aLong, clientThread) -> clientThread.discardCardUpdate()); break;
+			case 108: clientList.forEach((aLong, clientThread) -> clientThread.removeCard(data)); break;
+			case 112: clientList.forEach((aLong, clientThread) -> clientThread.finishGame()); break;
 		}
 	}
 
@@ -45,7 +48,7 @@ public class Server {
 			new Thread(() -> {
 				while (true){
 					try {
-						if (clientList.size() == 2 && !gameStarted) {
+						if (clientList.size() == Server.numberOfPlayers && !gameStarted) {
 							gameStarted = true;
 							deck = new Deck();
 							clientList.forEach((aLong, clientThread) -> clientThread.startGame());
@@ -66,7 +69,7 @@ public class Server {
 				}
 				else {
 					clientInfo.start();
-					clientList.put(clientInfo.getId(), clientInfo);
+					clientList.put(playerNumber, clientInfo);
 					System.out.println("[NEW] " + clientInfo.getName());
 					playerNumber++;
 				}
