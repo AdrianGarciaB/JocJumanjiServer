@@ -17,6 +17,7 @@ public class Card implements Serializable {
     private boolean flipped;
     private boolean hide;
     public int cardPosition;
+    public boolean discarted;
 
     public Card(Type type, int cardNumber) {
         this.type = type;

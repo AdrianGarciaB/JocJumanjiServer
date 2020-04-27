@@ -91,7 +91,6 @@ public class ClientThread extends Thread {
 						Server.deck.setLastCardDiscarted(discartedCard);
 						Server.notifyUsers(102);
 						break;
-
 					}
 				}
 			}
