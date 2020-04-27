@@ -20,8 +20,8 @@ public class Deck {
     }
     public Card getRandomCard(){
         int cardId = (int) (Math.random()*(mainDeck.size()-1));
+
         Card randomCard = mainDeck.get(cardId);
-        mainDeck.remove(cardId);
         return randomCard;
     }
 
